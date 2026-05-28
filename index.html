@@ -2,262 +2,223 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Age of War - Versión Original 1.1</title>
+    <title>Age of War - Versión Final 1.2</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .muro { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 90%; margin-bottom: 20px; }
-        .carta { background: #f4f4f4; color: #333; padding: 12px; border-radius: 10px; border: 5px solid #ccc; cursor: pointer; transition: 0.2s; position: relative; min-height: 160px; }
-        .carta.seleccionada { border-color: #f1c40f; box-shadow: 0 0 20px #f1c40f; transform: translateY(-5px); z-index: 5; }
-        .carta.inexpugnable { background: #2c3e50; color: #bdc3c7; border-color: #27ae60; cursor: default; opacity: 0.8; }
-        .clan-tag { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-        .linea { border: 1px solid #ccc; margin: 4px 0; padding: 3px; border-radius: 4px; background: white; font-weight: bold; font-size: 0.9rem; }
-        .linea.hecha { background: #27ae60; color: white; text-decoration: line-through; }
-        .linea.disponible { border: 2px solid #2ecc71; background: #e8f8f5; animation: blink 1s infinite; }
+        body { font-family: 'Arial', sans-serif; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        #muro { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 90%; margin-top: 20px; padding-bottom: 200px; }
+        .carta { background: #eee; color: #111; padding: 10px; border-radius: 8px; border: 4px solid #888; cursor: pointer; transition: 0.2s; position: relative; min-height: 140px; }
+        .carta.seleccionada { border-color: #f1c40f; box-shadow: 0 0 20px #f1c40f; transform: scale(1.02); }
+        .carta.inexpugnable { background: #333; color: #999; border-color: #27ae60; cursor: default; }
+        .clan-label { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+        .linea { border: 1px solid #ccc; margin: 4px 0; padding: 3px; border-radius: 4px; background: white; font-weight: bold; font-size: 0.8rem; text-align: center; }
+        .linea.hecha { background: #27ae60; color: white; text-decoration: line-through; border-color: #1e8449; }
+        .linea.resaltada { border: 2px solid #2ecc71; background: #d5f5e3; animation: glow 1s infinite alternate; cursor: pointer; }
         
-        .panel-control { background: #2c3e50; width: 100%; padding: 20px; position: fixed; bottom: 0; display: flex; justify-content: space-around; align-items: center; border-top: 4px solid #f1c40f; z-index: 100; }
-        .bandeja { display: flex; gap: 10px; min-width: 400px; justify-content: center; }
-        .dado { width: 55px; height: 55px; background: white; color: black; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.5rem; border: 3px solid #333; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
-        .stats { position: fixed; top: 10px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; border: 1px solid #f1c40f; }
-        button { padding: 12px 25px; font-size: 1.1rem; cursor: pointer; border-radius: 8px; border: none; background: #e67e22; color: white; font-weight: bold; }
-        button:disabled { background: #7f8c8d; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .panel-inferior { position: fixed; bottom: 0; width: 100%; background: #222; border-top: 4px solid #f1c40f; padding: 20px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .bandeja-dados { display: flex; gap: 10px; min-width: 350px; justify-content: center; background: #333; padding: 15px; border-radius: 10px; }
+        .dado { width: 50px; height: 50px; background: white; color: black; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.4rem; font-weight: bold; border: 2px solid #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+        
+        .marcador { position: fixed; top: 10px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #f1c40f; border-radius: 10px; }
+        button { padding: 12px 20px; font-size: 1rem; cursor: pointer; border-radius: 5px; border: none; background: #e67e22; color: white; font-weight: bold; }
+        button:disabled { background: #444; color: #777; cursor: not-allowed; }
+        @keyframes glow { from { box-shadow: 0 0 5px #2ecc71; } to { box-shadow: 0 0 15px #2ecc71; } }
     </style>
 </head>
 <body>
 
-    <div class="stats">
-        <div style="color:#f1c40f; font-weight:bold;">PUNTUACIÓN: <span id="puntos">0</span></div>
-        <div id="clanes-unificados" style="font-size: 0.8rem; color: #2ecc71; margin-top:5px;"></div>
+    <div class="marcador">
+        <div style="color:#f1c40f; font-size: 1.2rem;">PUNTOS: <span id="puntos-val">0</span></div>
+        <div id="clanes-lista" style="font-size: 0.7rem; color: #2ecc71; margin-top: 5px;"></div>
     </div>
 
-    <h1>Age of War: Unificación del Japón</h1>
-    <p id="msg">Selecciona un castillo neutral para iniciar el asalto.</p>
+    <h1>Age of War - Digital</h1>
+    <p id="feedback">Selecciona un castillo para empezar el asalto.</p>
 
-    <div class="muro" id="muro"></div>
+    <div id="muro"></div>
 
-    <div class="panel-control">
-        <div id="dados-contar">Tropas: 7</div>
-        <div class="bandeja" id="bandeja"></div>
+    <div class="panel-inferior">
+        <div id="info-dados">Dados: 7</div>
+        <div class="bandeja-dados" id="bandeja"></div>
         <div>
-            <button id="btn-lanzar" onclick="lanzarDados()" disabled>Lanzar Dados</button>
-            <button id="btn-fallo" onclick="penalizar()" style="display:none; background:#c0392b;">Fallo (Retirar 1 dado)</button>
+            <button id="btn-lanzar" onclick="lanzar()" disabled>Lanzar Dados</button>
+            <button id="btn-fallo" onclick="penalizar()" style="display:none; background:#c0392b;">Fallo (Perder 1 dado)</button>
         </div>
     </div>
 
     <script>
-        // DATOS ORIGINALES DE LAS 14 CARTAS [3, 5, 6]
-        const castillosOriginales = [
-            { id: 0, clan: "Mori", nombre: "Takahashi", color: "#e74c3c", lineas: ["🏹", "⚔️5"], pts: 1, unific: 10 },
-            { id: 1, clan: "Mori", nombre: "Hiroshima", color: "#e74c3c", lineas: ["🐎", "⚔️6"], pts: 2, unific: 10 },
-            { id: 2, clan: "Mori", nombre: "Gassantoda", color: "#e74c3c", lineas: ["👺", "🏹", "⚔️8"], pts: 3, unific: 10 },
-            { id: 3, clan: "Uesugi", nombre: "Kitanosho", color: "#8e44ad", lineas: ["🏹", "🐎", "⚔️6"], pts: 3, unific: 12 },
-            { id: 4, clan: "Uesugi", nombre: "Kasugayama", color: "#8e44ad", lineas: ["👺", "🐎", "⚔️8"], pts: 5, unific: 12 },
-            { id: 5, clan: "Chosokabe", nombre: "Matsuyama", color: "#3498db", lineas: ["🏹", "⚔️4"], pts: 1, unific: 5 },
-            { id: 6, clan: "Chosokabe", nombre: "Marugame", color: "#3498db", lineas: ["🐎", "⚔️5"], pts: 2, unific: 5 },
-            { id: 7, clan: "Shimazu", nombre: "Kagoshima", color: "#27ae60", lineas: ["🏹", "⚔️6"], pts: 2, unific: 7 },
-            { id: 8, clan: "Shimazu", nombre: "Kumamoto", color: "#27ae60", lineas: ["👺", "⚔️8"], pts: 3, unific: 7 },
-            { id: 9, clan: "Tokugawa", nombre: "Okazaki", color: "#f1c40f", lineas: ["🐎", "⚔️5"], pts: 2, unific: 8 },
-            { id: 10, clan: "Tokugawa", nombre: "Edo", color: "#f1c40f", lineas: ["👺", "⚔️7"], pts: 3, unific: 8 },
-            { id: 11, clan: "Oda", nombre: "Gifu", color: "#d35400", lineas: ["🏹", "⚔️6"], pts: 2, unific: 18 },
-            { id: 12, clan: "Oda", nombre: "Matsumoto", color: "#d35400", lineas: ["🐎", "⚔️7"], pts: 4, unific: 18 },
-            { id: 13, clan: "Oda", nombre: "Azuchi", color: "#d35400", lineas: ["👺", "⚔️9"], pts: 6, unific: 18 }
+        // Datos exactos de los 14 castillos originales
+        const castillos = [
+            { id: 0, clan: "Mori", nombre: "Takahashi", color: "#e74c3c", lineas: ["🏹", "⚔️5"], pts: 1, unif: 10 },
+            { id: 1, clan: "Mori", nombre: "Hiroshima", color: "#e74c3c", lineas: ["🐎", "⚔️6"], pts: 2, unif: 10 },
+            { id: 2, clan: "Mori", nombre: "Gassantoda", color: "#e74c3c", lineas: ["👺", "🏹", "⚔️8"], pts: 3, unif: 10 },
+            { id: 3, clan: "Uesugi", nombre: "Kitanosho", color: "#8e44ad", lineas: ["🏹", "🐎", "⚔️6"], pts: 3, unif: 12 },
+            { id: 4, clan: "Uesugi", nombre: "Kasugayama", color: "#8e44ad", lineas: ["👺", "🐎", "⚔️8"], pts: 5, unif: 12 },
+            { id: 5, clan: "Chosokabe", nombre: "Matsuyama", color: "#3498db", lineas: ["🏹", "⚔️4"], pts: 1, unif: 5 },
+            { id: 6, clan: "Chosokabe", nombre: "Marugame", color: "#3498db", lineas: ["🐎", "⚔️5"], pts: 2, unif: 5 },
+            { id: 7, clan: "Shimazu", nombre: "Kagoshima", color: "#27ae60", lineas: ["🏹", "⚔️6"], pts: 2, unif: 7 },
+            { id: 8, clan: "Shimazu", nombre: "Kumamoto", color: "#27ae60", lineas: ["👺", "⚔️8"], pts: 3, unif: 7 },
+            { id: 9, clan: "Tokugawa", nombre: "Okazaki", color: "#f1c40f", lineas: ["🐎", "⚔️5"], pts: 2, unif: 8 },
+            { id: 10, clan: "Tokugawa", nombre: "Edo", color: "#f1c40f", lineas: ["👺", "⚔️7"], pts: 3, unif: 8 },
+            { id: 11, clan: "Oda", nombre: "Gifu", color: "#d35400", lineas: ["🏹", "⚔️6"], pts: 2, unif: 18 },
+            { id: 12, clan: "Oda", nombre: "Matsumoto", color: "#d35400", lineas: ["🐎", "⚔️7"], pts: 4, unif: 18 },
+            { id: 13, clan: "Oda", nombre: "Azuchi", color: "#d35400", lineas: ["👺", "⚔️9"], pts: 6, unif: 18 }
         ];
 
-        let dadosEnMano = 7;
-        let dadosBloqueados = 0;
-        let castilloObjetivo = null;
+        let dadosMano = 7;
+        let dadosEnCarta = 0;
+        let idSeleccionado = null;
         let conquistados = [];
-        let clanesCompletos = [];
-        let resultados = [];
+        let clanesLlenos = [];
+        let tirada = [];
 
-        function renderMuro() {
-            const muro = document.getElementById('muro');
-            muro.innerHTML = '';
-            castillosOriginales.forEach(c => {
+        function render() {
+            const container = document.getElementById('muro');
+            container.innerHTML = '';
+            castillos.forEach(c => {
+                const esUnif = clanesLlenos.includes(c.clan);
                 const div = document.createElement('div');
-                const esUnificado = clanesCompletos.includes(c.clan);
-                div.className = `carta ${esUnificado ? 'inexpugnable' : ''} ${castilloObjetivo === c.id ? 'seleccionada' : ''}`;
+                div.className = `carta ${esUnif ? 'inexpugnable' : ''} ${idSeleccionado === c.id ? 'seleccionada' : ''}`;
                 div.style.borderColor = c.color;
+                div.innerHTML = `<div class="clan-label" style="color:${c.color}">${c.clan}</div>
+                                 <strong>${c.nombre}</strong><div id="lines-${c.id}"></div>
+                                 <div style="margin-top:10px">PTS: ${c.pts}</div>`;
                 
-                div.innerHTML = `<div class="clan-tag" style="color:${c.color}">${c.clan}</div>
-                                 <strong style="font-size:1.1rem">${c.nombre}</strong><br>
-                                 <div id="lineas-${c.id}"></div>
-                                 <div style="position:absolute; bottom:10px; left:12px; font-weight:bold">PTS: ${c.pts}</div>`;
-                
-                const lineasDiv = div.querySelector(`#lineas-${c.id}`);
-                c.lineas.forEach((l, idx) => {
+                const linesDiv = div.querySelector(`#lines-${c.id}`);
+                c.lineas.forEach((l, i) => {
                     const lDiv = document.createElement('div');
                     lDiv.className = 'linea';
-                    lDiv.id = `l-${c.id}-${idx}`;
+                    lDiv.id = `l-${c.id}-${i}`;
                     lDiv.innerText = l;
-                    lineasDiv.appendChild(lDiv);
+                    linesDiv.appendChild(lDiv);
                 });
 
-                if (!esUnificado && !conquistados.includes(c.id)) {
-                    div.onclick = () => seleccionarCastillo(c.id);
-                }
-                muro.appendChild(div);
+                if (!esUnif && !conquistados.includes(c.id)) div.onclick = () => select(c.id);
+                container.appendChild(div);
             });
-            actualizarUI();
+            updateStats();
         }
 
-        function seleccionarCastillo(id) {
-            if (dadosBloqueados > 0) return; // No cambiar durante ataque
-            castilloObjetivo = id;
+        function select(id) {
+            if (dadosEnCarta > 0) return; // No cambiar a mitad de ataque
+            idSeleccionado = id;
             document.getElementById('btn-lanzar').disabled = false;
-            document.getElementById('msg').innerText = `Asaltando ${castillosOriginales[id].nombre}. ¡Lanza tus tropas!`;
-            renderMuro();
+            document.getElementById('feedback').innerText = `Atacando ${castillos[id].nombre}. ¡Lanza!`;
+            render();
         }
 
-        function lanzarDados() {
-            const num = dadosEnMano - dadosBloqueados;
+        function lanzar() {
+            const num = dadosMano - dadosEnCarta;
             const caras = ["⚔️1", "⚔️2", "⚔️3", "🏹", "🐎", "👺"];
-            resultados = [];
-            const bandeja = document.getElementById('bandeja');
-            bandeja.innerHTML = '';
-            
-            for(let i=0; i<num; i++){
+            tirada = [];
+            const tray = document.getElementById('bandeja');
+            tray.innerHTML = '';
+            for(let i=0; i<num; i++) {
                 const r = caras[Math.floor(Math.random()*6)];
-                resultados.push({
-                    val: r.includes('⚔️') ? parseInt(r.replace('⚔️','')) : 1,
-                    tipo: r.includes('⚔️') ? 'inf' : r,
-                    txt: r
-                });
-                bandeja.innerHTML += `<div class="dado">${r}</div>`;
+                tirada.push({ val: r.includes('⚔️') ? parseInt(r.replace('⚔️','')) : 1, tipo: r.includes('⚔️') ? 'inf' : r, txt: r });
+                tray.innerHTML += `<div class="dado">${r}</div>`;
             }
-            validarMovimientos();
+            validar();
         }
 
-        function validarMovimientos() {
-            const card = castillosOriginales[castilloObjetivo];
-            let hayOpcion = false;
+        function validar() {
+            const c = castillos[idSeleccionado];
+            let hayAlgo = false;
             document.getElementById('btn-lanzar').disabled = true;
             document.getElementById('btn-fallo').style.display = 'inline-block';
 
-            card.lineas.forEach((l, idx) => {
-                const el = document.getElementById(`l-${castilloObjetivo}-${idx}`);
+            c.lineas.forEach((l, i) => {
+                const el = document.getElementById(`l-${idSeleccionado}-${i}`);
                 if (el.classList.contains('hecha')) return;
-
-                let cumple = false;
+                let ok = false;
                 if (l.includes('⚔️')) {
                     const req = parseInt(l.replace('⚔️',''));
-                    const totalInf = resultados.filter(d => d.tipo === 'inf').reduce((a,b) => a + b.val, 0);
-                    if (totalInf >= req) cumple = true;
-                } else if (resultados.some(d => d.txt === l)) {
-                    cumple = true;
-                }
+                    const sum = tirada.filter(d => d.tipo === 'inf').reduce((a,b) => a + b.val, 0);
+                    if (sum >= req) ok = true;
+                } else if (tirada.some(d => d.txt === l)) ok = true;
 
-                if (cumple) {
-                    el.classList.add('disponible');
-                    el.onclick = () => completarLinea(idx, l);
-                    hayOpcion = true;
+                if (ok) {
+                    el.classList.add('resaltada');
+                    el.onclick = () => ocupar(i, l);
+                    hayAlgo = true;
                 }
             });
-
-            document.getElementById('msg').innerText = hayOpcion ? "¡Éxito! Elige una línea para ocupar." : "Fallo en el asalto. Debes retirar un dado.";
+            document.getElementById('feedback').innerText = hayAlgo ? "¡Coincidencia! Elige una línea." : "Nada coincide. Pierde 1 dado.";
         }
 
-        function completarLinea(idx, texto) {
-            // LÓGICA DE DADOS SOLICITADA: DESCONTAR SOLO LO NECESARIO [4]
-            let dadosAUsar = 0;
-            if (texto.includes('⚔️')) {
-                const req = parseInt(texto.replace('⚔️',''));
-                // Ordenar katanas de mayor a menor para usar la menor cantidad de dados posible
-                const katanas = resultados.filter(d => d.tipo === 'inf').sort((a,b) => b.val - a.val);
-                let suma = 0;
-                for(let k of katanas) {
-                    suma += k.val;
-                    dadosAUsar++;
-                    if (suma >= req) break;
+        function ocupar(idx, txt) {
+            // LÓGICA SOLICITADA: DESCONTAR EL MÍNIMO DE DADOS
+            let usados = 0;
+            if (txt.includes('⚔️')) {
+                const req = parseInt(txt.replace('⚔️',''));
+                // Ordenamos de mayor a menor para usar la MENOR cantidad de dados posibles
+                const kats = tirada.filter(d => d.tipo === 'inf').sort((a,b) => b.val - a.val);
+                let sumaActual = 0;
+                for(let k of kats) {
+                    sumaActual += k.val;
+                    usados++;
+                    if (sumaActual >= req) break;
                 }
-            } else {
-                dadosAUsar = 1;
-            }
+            } else usados = 1;
 
-            dadosBloqueados += dadosAUsar;
-            const el = document.getElementById(`l-${castilloObjetivo}-${idx}`);
-            el.classList.replace('disponible', 'hecha');
+            dadosEnCarta += usados;
+            const el = document.getElementById(`l-${idSeleccionado}-${idx}`);
+            el.classList.replace('resaltada', 'hecha');
             el.onclick = null;
+            document.querySelectorAll('.linea.resaltada').forEach(e => { e.classList.remove('resaltada'); e.onclick = null; });
 
-            // Limpiar otras opciones de esta tirada
-            document.querySelectorAll('.linea.disponible').forEach(e => {
-                e.classList.remove('disponible');
-                e.onclick = null;
-            });
-
-            // Verificar si el castillo fue conquistado
-            const restantes = document.querySelectorAll(`#lineas-${castilloObjetivo} .linea:not(.hecha)`);
-            if (restantes.length === 0) {
-                conquistar();
+            if (document.querySelectorAll(`#lines-${idSeleccionado} .linea:not(.hecha)`).length === 0) {
+                alert(`¡Castillo conquistado!`);
+                conquistados.push(idSeleccionado);
+                checkClanes();
+                reset();
             } else {
                 document.getElementById('btn-lanzar').disabled = false;
                 document.getElementById('btn-fallo').style.display = 'none';
             }
-            actualizarUI();
+            updateStats();
         }
 
         function penalizar() {
-            dadosEnMano--;
-            if (dadosEnMano <= dadosBloqueados) {
-                alert("Asalto fallido. Has perdido todas tus tropas.");
-                resetTurno();
-            } else {
-                lanzarDados();
-            }
-            actualizarUI();
+            dadosMano--;
+            if (dadosMano <= dadosEnCarta) { alert("¡Derrota! Sin tropas."); reset(); }
+            else lanzar();
+            updateStats();
         }
 
-        function conquistar() {
-            alert(`¡Has conquistado ${castillosOriginales[castilloObjetivo].nombre}!`);
-            conquistados.push(castilloObjetivo);
-            verificarClanes();
-            resetTurno();
-        }
-
-        function verificarClanes() {
-            const clanes = ["Mori", "Uesugi", "Chosokabe", "Shimazu", "Tokugawa", "Oda"];
-            clanes.forEach(clan => {
-                const totalIds = castillosOriginales.filter(c => c.clan === clan).map(c => c.id);
-                if (totalIds.every(id => conquistados.includes(id)) && !clanesCompletos.includes(clan)) {
-                    clanesCompletos.push(clan);
-                    alert(`¡GRAN VICTORIA! El clan ${clan} ha sido unificado.`);
+        function checkClanes() {
+            ["Mori", "Uesugi", "Chosokabe", "Shimazu", "Tokugawa", "Oda"].forEach(clan => {
+                const ids = castillos.filter(c => c.clan === clan).map(c => c.id);
+                if (ids.every(id => conquistados.includes(id)) && !clanesLlenos.includes(clan)) {
+                    clanesLlenos.push(clan);
+                    alert(`¡Clan ${clan} unificado!`);
                 }
             });
         }
 
-        function resetTurno() {
-            dadosEnMano = 7;
-            dadosBloqueados = 0;
-            castilloObjetivo = null;
+        function reset() {
+            dadosMano = 7; dadosEnCarta = 0; idSeleccionado = null;
             document.getElementById('btn-lanzar').disabled = true;
             document.getElementById('btn-fallo').style.display = 'none';
             document.getElementById('bandeja').innerHTML = '';
-            renderMuro();
+            render();
         }
 
-        function actualizarUI() {
-            document.getElementById('dados-contar').innerText = `Tropas disponibles: ${dadosEnMano - dadosBloqueados}`;
-            
-            // Cálculo de puntos [6, 7]
+        function updateStats() {
+            document.getElementById('info-dados').innerText = `Tropas: ${dadosMano - dadosEnCarta}`;
             let total = 0;
-            const clanesProcesados = [];
-            castillosOriginales.forEach(c => {
+            const clansVistos = [];
+            castillos.forEach(c => {
                 if (conquistados.includes(c.id)) {
-                    if (clanesCompletos.includes(c.clan)) {
-                        if (!clanesProcesados.includes(c.clan)) {
-                            total += c.unific; // Sumar valor de reverso [8]
-                            clanesProcesados.push(c.clan);
-                        }
-                    } else {
-                        total += c.pts;
-                    }
+                    if (clanesLlenos.includes(c.clan)) {
+                        if (!clansVistos.includes(c.clan)) { total += c.unif; clansVistos.push(c.clan); }
+                    } else total += c.pts;
                 }
             });
-            document.getElementById('puntos').innerText = total;
-            document.getElementById('clanes-unificados').innerText = clanesCompletos.length > 0 ? "Clanes: " + clanesCompletos.join(", ") : "";
+            document.getElementById('puntos-val').innerText = total;
+            document.getElementById('clanes-lista').innerText = clanesLlenos.join(", ");
         }
 
-        crearMuro(); renderMuro();
+        render(); // ESTO INICIA EL JUEGO AL CARGAR
     </script>
 </body>
 </html>
