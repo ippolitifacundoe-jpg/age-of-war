@@ -2,66 +2,73 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Age of War - Versión Final 1.2</title>
+    <title>Age of War - Versión Original 1.3</title>
     <style>
-        body { font-family: 'Arial', sans-serif; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        #muro { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 90%; margin-top: 20px; padding-bottom: 200px; }
-        .carta { background: #eee; color: #111; padding: 10px; border-radius: 8px; border: 4px solid #888; cursor: pointer; transition: 0.2s; position: relative; min-height: 140px; }
-        .carta.seleccionada { border-color: #f1c40f; box-shadow: 0 0 20px #f1c40f; transform: scale(1.02); }
-        .carta.inexpugnable { background: #333; color: #999; border-color: #27ae60; cursor: default; }
-        .clan-label { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-        .linea { border: 1px solid #ccc; margin: 4px 0; padding: 3px; border-radius: 4px; background: white; font-weight: bold; font-size: 0.8rem; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        #muro { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 95%; padding-bottom: 220px; }
+        .carta { background: #fdfdfd; color: #111; padding: 12px; border-radius: 10px; border: 5px solid #888; cursor: pointer; transition: 0.2s; position: relative; min-height: 180px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        .carta.seleccionada { border-color: #f1c40f; box-shadow: 0 0 25px #f1c40f; transform: scale(1.03); z-index: 10; }
+        .carta.inexpugnable { background: #2c3e50; color: #bdc3c7; border-color: #27ae60; cursor: default; }
+        .clan-label { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .linea { border: 1px solid #ccc; margin: 4px 0; padding: 4px; border-radius: 5px; background: white; font-weight: bold; font-size: 0.9rem; text-align: center; }
         .linea.hecha { background: #27ae60; color: white; text-decoration: line-through; border-color: #1e8449; }
-        .linea.resaltada { border: 2px solid #2ecc71; background: #d5f5e3; animation: glow 1s infinite alternate; cursor: pointer; }
+        .linea.resaltada { border: 2px solid #2ecc71; background: #d5f5e3; animation: glow 0.8s infinite alternate; cursor: pointer; }
         
-        .panel-inferior { position: fixed; bottom: 0; width: 100%; background: #222; border-top: 4px solid #f1c40f; padding: 20px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-        .bandeja-dados { display: flex; gap: 10px; min-width: 350px; justify-content: center; background: #333; padding: 15px; border-radius: 10px; }
-        .dado { width: 50px; height: 50px; background: white; color: black; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.4rem; font-weight: bold; border: 2px solid #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+        .panel-inferior { position: fixed; bottom: 0; width: 100%; background: #222; border-top: 5px solid #f1c40f; padding: 20px; display: flex; justify-content: space-around; align-items: center; z-index: 100; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); }
+        .bandeja-dados { display: flex; gap: 10px; min-width: 400px; justify-content: center; background: #333; padding: 15px; border-radius: 12px; border: 1px solid #444; }
+        .dado { width: 55px; height: 55px; background: white; color: black; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.6rem; font-weight: bold; border: 3px solid #000; }
         
-        .marcador { position: fixed; top: 10px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #f1c40f; border-radius: 10px; }
-        button { padding: 12px 20px; font-size: 1rem; cursor: pointer; border-radius: 5px; border: none; background: #e67e22; color: white; font-weight: bold; }
-        button:disabled { background: #444; color: #777; cursor: not-allowed; }
-        @keyframes glow { from { box-shadow: 0 0 5px #2ecc71; } to { box-shadow: 0 0 15px #2ecc71; } }
+        .stats { position: fixed; top: 10px; right: 20px; background: rgba(0,0,0,0.9); padding: 15px; border: 2px solid #f1c40f; border-radius: 12px; z-index: 1000; }
+        button { padding: 15px 30px; font-size: 1.1rem; cursor: pointer; border-radius: 8px; border: none; background: #e67e22; color: white; font-weight: bold; box-shadow: 0 4px #d35400; }
+        button:active { transform: translateY(2px); box-shadow: 0 2px #d35400; }
+        button:disabled { background: #444; color: #777; cursor: not-allowed; box-shadow: none; }
+        @keyframes glow { from { box-shadow: 0 0 5px #2ecc71; } to { box-shadow: 0 0 20px #2ecc71; } }
     </style>
 </head>
 <body>
 
-    <div class="marcador">
-        <div style="color:#f1c40f; font-size: 1.2rem;">PUNTOS: <span id="puntos-val">0</span></div>
-        <div id="clanes-lista" style="font-size: 0.7rem; color: #2ecc71; margin-top: 5px;"></div>
+    <div class="stats">
+        <div style="color:#f1c40f; font-size: 1.3rem;">PUNTOS: <span id="puntos-val">0</span></div>
+        <div id="clanes-lista" style="font-size: 0.8rem; color: #2ecc71; margin-top: 5px; font-weight: bold;"></div>
     </div>
 
-    <h1>Age of War - Digital</h1>
-    <p id="feedback">Selecciona un castillo para empezar el asalto.</p>
+    <h1 style="margin-bottom: 5px; color: #f1c40f; text-shadow: 2px 2px #000;">Age of War: El Juego de Mesa</h1>
+    <p id="feedback" style="background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px;">Selecciona un castillo neutral para iniciar el asalto.</p>
 
     <div id="muro"></div>
 
     <div class="panel-inferior">
-        <div id="info-dados">Dados: 7</div>
+        <div id="info-dados" style="font-size: 1.2rem; color: #f1c40f;">Tropas: 7</div>
         <div class="bandeja-dados" id="bandeja"></div>
         <div>
-            <button id="btn-lanzar" onclick="lanzar()" disabled>Lanzar Dados</button>
-            <button id="btn-fallo" onclick="penalizar()" style="display:none; background:#c0392b;">Fallo (Perder 1 dado)</button>
+            <button id="btn-lanzar" onclick="lanzar()" disabled>LANZAR ATAQUE</button>
+            <button id="btn-fallo" onclick="penalizar()" style="display:none; background:#c0392b;">FALLO (PERDER DADO)</button>
         </div>
     </div>
 
     <script>
-        // Datos exactos de los 14 castillos originales
+        // DATOS REALES DE LAS 14 CARTAS (Reglas de Reiner Knizia) [3, 6, 7]
         const castillos = [
+            // Mori (Rojo - 3 castillos)
             { id: 0, clan: "Mori", nombre: "Takahashi", color: "#e74c3c", lineas: ["🏹", "⚔️5"], pts: 1, unif: 10 },
             { id: 1, clan: "Mori", nombre: "Hiroshima", color: "#e74c3c", lineas: ["🐎", "⚔️6"], pts: 2, unif: 10 },
             { id: 2, clan: "Mori", nombre: "Gassantoda", color: "#e74c3c", lineas: ["👺", "🏹", "⚔️8"], pts: 3, unif: 10 },
+            // Uesugi (Púrpura - 2 castillos)
             { id: 3, clan: "Uesugi", nombre: "Kitanosho", color: "#8e44ad", lineas: ["🏹", "🐎", "⚔️6"], pts: 3, unif: 12 },
             { id: 4, clan: "Uesugi", nombre: "Kasugayama", color: "#8e44ad", lineas: ["👺", "🐎", "⚔️8"], pts: 5, unif: 12 },
+            // Chosokabe (Azul - 2 castillos)
             { id: 5, clan: "Chosokabe", nombre: "Matsuyama", color: "#3498db", lineas: ["🏹", "⚔️4"], pts: 1, unif: 5 },
             { id: 6, clan: "Chosokabe", nombre: "Marugame", color: "#3498db", lineas: ["🐎", "⚔️5"], pts: 2, unif: 5 },
+            // Shimazu (Verde - 2 castillos)
             { id: 7, clan: "Shimazu", nombre: "Kagoshima", color: "#27ae60", lineas: ["🏹", "⚔️6"], pts: 2, unif: 7 },
             { id: 8, clan: "Shimazu", nombre: "Kumamoto", color: "#27ae60", lineas: ["👺", "⚔️8"], pts: 3, unif: 7 },
+            // Tokugawa (Amarillo - 2 castillos)
             { id: 9, clan: "Tokugawa", nombre: "Okazaki", color: "#f1c40f", lineas: ["🐎", "⚔️5"], pts: 2, unif: 8 },
             { id: 10, clan: "Tokugawa", nombre: "Edo", color: "#f1c40f", lineas: ["👺", "⚔️7"], pts: 3, unif: 8 },
+            // Oda (Naranja - 3 castillos)
             { id: 11, clan: "Oda", nombre: "Gifu", color: "#d35400", lineas: ["🏹", "⚔️6"], pts: 2, unif: 18 },
             { id: 12, clan: "Oda", nombre: "Matsumoto", color: "#d35400", lineas: ["🐎", "⚔️7"], pts: 4, unif: 18 },
-            { id: 13, clan: "Oda", nombre: "Azuchi", color: "#d35400", lineas: ["👺", "⚔️9"], pts: 6, unif: 18 }
+            { id: 13, clan: "Oda", nombre: "Azuchi", color: "#d35400", lineas: ["👺", "🏹", "⚔️9"], pts: 6, unif: 18 }
         ];
 
         let dadosMano = 7;
@@ -80,8 +87,8 @@
                 div.className = `carta ${esUnif ? 'inexpugnable' : ''} ${idSeleccionado === c.id ? 'seleccionada' : ''}`;
                 div.style.borderColor = c.color;
                 div.innerHTML = `<div class="clan-label" style="color:${c.color}">${c.clan}</div>
-                                 <strong>${c.nombre}</strong><div id="lines-${c.id}"></div>
-                                 <div style="margin-top:10px">PTS: ${c.pts}</div>`;
+                                 <strong style="font-size:1.1rem">${c.nombre}</strong><div id="lines-${c.id}"></div>
+                                 <div style="position:absolute; bottom:10px; left:12px; font-weight:bold; font-size:1.1rem">PTS: ${c.pts}</div>`;
                 
                 const linesDiv = div.querySelector(`#lines-${c.id}`);
                 c.lineas.forEach((l, i) => {
@@ -99,10 +106,10 @@
         }
 
         function select(id) {
-            if (dadosEnCarta > 0) return; // No cambiar a mitad de ataque
+            if (dadosEnCarta > 0) return;
             idSeleccionado = id;
             document.getElementById('btn-lanzar').disabled = false;
-            document.getElementById('feedback').innerText = `Atacando ${castillos[id].nombre}. ¡Lanza!`;
+            document.getElementById('feedback').innerText = `Asaltando ${castillos[id].nombre}. ¡Lanza tus dados!`;
             render();
         }
 
@@ -129,12 +136,22 @@
             c.lineas.forEach((l, i) => {
                 const el = document.getElementById(`l-${idSeleccionado}-${i}`);
                 if (el.classList.contains('hecha')) return;
+                
                 let ok = false;
                 if (l.includes('⚔️')) {
                     const req = parseInt(l.replace('⚔️',''));
                     const sum = tirada.filter(d => d.tipo === 'inf').reduce((a,b) => a + b.val, 0);
                     if (sum >= req) ok = true;
-                } else if (tirada.some(d => d.txt === l)) ok = true;
+                } else {
+                    // Soporte para líneas con múltiples símbolos (ej: 🏹🏹)
+                    const simbolosReq = [...l];
+                    const disponibles = tirada.map(d => d.txt);
+                    ok = simbolosReq.every(s => {
+                        const idx = disponibles.indexOf(s);
+                        if (idx > -1) { disponibles.splice(idx, 1); return true; }
+                        return false;
+                    });
+                }
 
                 if (ok) {
                     el.classList.add('resaltada');
@@ -142,23 +159,46 @@
                     hayAlgo = true;
                 }
             });
-            document.getElementById('feedback').innerText = hayAlgo ? "¡Coincidencia! Elige una línea." : "Nada coincide. Pierde 1 dado.";
+
+            if (!hayAlgo) {
+                document.getElementById('feedback').innerText = "Fallo en el asalto. Pierde 1 dado.";
+                // LOGICA DE DERROTA INEVITABLE: Si al perder uno ya no hay posibilidad matemática
+                checkImposibilidad();
+            } else {
+                document.getElementById('feedback').innerText = "¡Tropas efectivas! Elige una línea de batalla.";
+            }
+        }
+
+        function checkImposibilidad() {
+            const dadosRestantes = (dadosMano - 1) - dadosEnCarta;
+            const lineasPendientes = Array.from(document.querySelectorAll(`#lines-${idSeleccionado} .linea:not(.hecha)`));
+            
+            // Requisito mínimo de dados: 1 por cada línea de símbolo + ceil(valor/3) para infantería
+            let minDadosReq = 0;
+            lineasPendientes.forEach(el => {
+                const texto = el.innerText;
+                if (texto.includes('⚔️')) {
+                    const val = parseInt(texto.replace('⚔️',''));
+                    minDadosReq += Math.ceil(val / 3);
+                } else {
+                    minDadosReq += [...texto].length;
+                }
+            });
+
+            if (dadosRestantes < minDadosReq) {
+                alert(`IMPOSIBLE CONTINUAR: Necesitas al menos ${minDadosReq} dados y te quedarían ${dadosRestantes}. Asalto fallido.`);
+                reset();
+            }
         }
 
         function ocupar(idx, txt) {
-            // LÓGICA SOLICITADA: DESCONTAR EL MÍNIMO DE DADOS
             let usados = 0;
             if (txt.includes('⚔️')) {
                 const req = parseInt(txt.replace('⚔️',''));
-                // Ordenamos de mayor a menor para usar la MENOR cantidad de dados posibles
                 const kats = tirada.filter(d => d.tipo === 'inf').sort((a,b) => b.val - a.val);
                 let sumaActual = 0;
-                for(let k of kats) {
-                    sumaActual += k.val;
-                    usados++;
-                    if (sumaActual >= req) break;
-                }
-            } else usados = 1;
+                for(let k of kats) { sumaActual += k.val; usados++; if (sumaActual >= req) break; }
+            } else usados = [...txt].length;
 
             dadosEnCarta += usados;
             const el = document.getElementById(`l-${idSeleccionado}-${idx}`);
@@ -167,20 +207,37 @@
             document.querySelectorAll('.linea.resaltada').forEach(e => { e.classList.remove('resaltada'); e.onclick = null; });
 
             if (document.querySelectorAll(`#lines-${idSeleccionado} .linea:not(.hecha)`).length === 0) {
-                alert(`¡Castillo conquistado!`);
+                alert(`¡CASTILLO CONQUISTADO!`);
                 conquistados.push(idSeleccionado);
                 checkClanes();
                 reset();
             } else {
                 document.getElementById('btn-lanzar').disabled = false;
                 document.getElementById('btn-fallo').style.display = 'none';
+                // Al ocupar línea, también verificamos si lo que queda es posible con los dados que sobran
+                checkImposibilidadDespuesDeOcupar();
             }
             updateStats();
         }
 
+        function checkImposibilidadDespuesDeOcupar() {
+            const dadosRestantes = dadosMano - dadosEnCarta;
+            // Misma lógica que arriba pero sin restar el dado de penalización
+             let minDadosReq = 0;
+            document.querySelectorAll(`#lines-${idSeleccionado} .linea:not(.hecha)`).forEach(el => {
+                const texto = el.innerText;
+                if (texto.includes('⚔️')) minDadosReq += Math.ceil(parseInt(texto.replace('⚔️','')) / 3);
+                else minDadosReq += [...texto].length;
+            });
+            if (dadosRestantes < minDadosReq) {
+                alert(`DERROTA TÁCTICA: Ya no tienes dados suficientes para completar las líneas restantes. Asalto fallido.`);
+                reset();
+            }
+        }
+
         function penalizar() {
             dadosMano--;
-            if (dadosMano <= dadosEnCarta) { alert("¡Derrota! Sin tropas."); reset(); }
+            if (dadosMano <= dadosEnCarta) { alert("Sin tropas suficientes. El asalto ha fallado."); reset(); }
             else lanzar();
             updateStats();
         }
@@ -190,7 +247,7 @@
                 const ids = castillos.filter(c => c.clan === clan).map(c => c.id);
                 if (ids.every(id => conquistados.includes(id)) && !clanesLlenos.includes(clan)) {
                     clanesLlenos.push(clan);
-                    alert(`¡Clan ${clan} unificado!`);
+                    alert(`¡CLAN ${clan.toUpperCase()} UNIFICADO! Las cartas ahora son inexpugnables.`);
                 }
             });
         }
@@ -204,7 +261,7 @@
         }
 
         function updateStats() {
-            document.getElementById('info-dados').innerText = `Tropas: ${dadosMano - dadosEnCarta}`;
+            document.getElementById('info-dados').innerText = `Tropas disponibles: ${dadosMano - dadosEnCarta}`;
             let total = 0;
             const clansVistos = [];
             castillos.forEach(c => {
@@ -218,7 +275,7 @@
             document.getElementById('clanes-lista').innerText = clanesLlenos.join(", ");
         }
 
-        render(); // ESTO INICIA EL JUEGO AL CARGAR
+        render();
     </script>
 </body>
 </html>
