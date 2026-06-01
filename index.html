@@ -2,215 +2,298 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Age of War - Versión Original 1.4</title>
+    <title>Age of War - Versión Multijugador 1.5</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
-        #muro { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; width: 98%; padding-bottom: 220px; margin-top: 20px; }
-        .carta { background: #fdfdfd; color: #111; padding: 8px; border-radius: 8px; border: 4px solid #888; cursor: pointer; transition: 0.2s; position: relative; min-height: 190px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
-        .carta.seleccionada { border-color: #f1c40f; box-shadow: 0 0 20px #f1c40f; transform: translateY(-5px); z-index: 10; }
-        .carta.inexpugnable { background: #333; color: #bdc3c7; border-color: #27ae60; cursor: default; }
-        .clan-label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; }
-        .linea { border: 1px solid #ccc; margin: 3px 0; padding: 3px; border-radius: 4px; background: white; font-weight: bold; font-size: 0.85rem; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; }
+        #setup-screen { background: #2c3e50; padding: 30px; border-radius: 15px; border: 4px solid #f1c40f; text-align: center; margin-top: 50px; }
+        #game-screen { display: none; width: 98%; }
+        #muro { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding-bottom: 220px; margin-top: 20px; }
+        .carta { background: #fdfdfd; color: #111; padding: 8px; border-radius: 8px; border: 4px solid #888; cursor: pointer; transition: 0.2s; position: relative; min-height: 200px; }
+        .carta.seleccionada { border-color: #f1c40f; box-shadow: 0 0 20px #f1c40f; transform: scale(1.02); z-index: 10; }
+        .carta.inexpugnable { background: #333; color: #999; border-color: #27ae60; cursor: default; }
+        .linea { border: 1px solid #ccc; margin: 3px 0; padding: 2px; border-radius: 4px; background: white; font-weight: bold; font-size: 0.8rem; text-align: center; }
         .linea.hecha { background: #27ae60; color: white; text-decoration: line-through; }
-        .linea.resaltada { border: 2px solid #2ecc71; background: #d5f5e3; animation: glow 0.8s infinite alternate; cursor: pointer; }
+        .linea.resaltada { border: 2px solid #2ecc71; background: #d5f5e3; cursor: pointer; }
+        .linea.daimyo-rojo { border: 2px solid #c0392b; color: #c0392b; background: #f9ebea; }
         
         .panel-inferior { position: fixed; bottom: 0; width: 100%; background: #222; border-top: 5px solid #f1c40f; padding: 15px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-        .bandeja-dados { display: flex; gap: 8px; min-width: 380px; justify-content: center; background: #333; padding: 12px; border-radius: 10px; border: 1px solid #444; }
-        .dado { width: 50px; height: 50px; background: white; color: black; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.4rem; font-weight: bold; border: 3px solid #000; }
+        .bandeja-dados { display: flex; gap: 8px; min-width: 350px; justify-content: center; background: #333; padding: 10px; border-radius: 10px; }
+        .dado { width: 45px; height: 45px; background: white; color: black; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.3rem; font-weight: bold; border: 2px solid #000; }
         
-        .stats { position: fixed; top: 10px; right: 20px; background: rgba(0,0,0,0.9); padding: 12px; border: 2px solid #f1c40f; border-radius: 12px; z-index: 1000; }
-        button { padding: 12px 25px; font-size: 1rem; cursor: pointer; border-radius: 6px; border: none; background: #e67e22; color: white; font-weight: bold; }
+        .players-bar { position: fixed; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; }
+        .player-tag { padding: 5px 15px; border-radius: 5px; font-weight: bold; border: 2px solid transparent; opacity: 0.6; }
+        .player-tag.active { opacity: 1; border-color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        
+        button { padding: 10px 20px; font-size: 1rem; cursor: pointer; border-radius: 5px; border: none; background: #e67e22; color: white; font-weight: bold; margin: 5px; }
         button:disabled { background: #444; color: #777; cursor: not-allowed; }
-        @keyframes glow { from { box-shadow: 0 0 5px #2ecc71; } to { box-shadow: 0 0 15px #2ecc71; } }
     </style>
 </head>
 <body>
 
-    <div class="stats">
-        <div style="color:#f1c40f; font-size: 1.1rem;">PUNTOS: <span id="puntos-val">0</span></div>
-        <div id="clanes-lista" style="font-size: 0.7rem; color: #2ecc71; margin-top: 4px;"></div>
+    <!-- Pantalla de Inicio -->
+    <div id="setup-screen">
+        <h1 style="color:#f1c40f">AGE OF WAR</h1>
+        <p>Selecciona el número de Daimyos (2-6):</p>
+        <div id="player-options">
+            <button onclick="initGame(2)">2 Jugadores</button>
+            <button onclick="initGame(3)">3 Jugadores</button>
+            <button onclick="initGame(4)">4 Jugadores</button>
+            <button onclick="initGame(5)">5 Jugadores</button>
+            <button onclick="initGame(6)">6 Jugadores</button>
+        </div>
+        <hr>
+        <button onclick="loadGame()" style="background:#27ae60">Continuar Partida Guardada</button>
     </div>
 
-    <h2 style="margin: 5px; color: #f1c40f;">Age of War: Distribución Oficial</h2>
-    <p id="feedback" style="font-size: 0.9rem;">Haz clic en un castillo para asaltarlo.</p>
-
-    <div id="muro"></div>
-
-    <div class="panel-inferior">
-        <div id="info-dados" style="font-size: 1.1rem; color: #f1c40f;">Dados: 7</div>
-        <div class="bandeja-dados" id="bandeja"></div>
-        <div>
-            <button id="btn-lanzar" onclick="lanzar()" disabled>LANZAR ATAQUE</button>
-            <button id="btn-fallo" onclick="penalizar()" style="display:none; background:#c0392b;">FALLO (PERDER DADO)</button>
+    <!-- Pantalla de Juego -->
+    <div id="game-screen">
+        <div class="players-bar" id="players-list"></div>
+        <div style="text-align: right; width: 100%;">
+            <button onclick="saveGame()" style="background:#2980b9; font-size:0.8rem">Guardar Partida</button>
+        </div>
+        <h2 id="turn-info" style="text-align:center; color:#f1c40f; margin:5px;">Turno de: Jugador 1</h2>
+        <p id="feedback" style="text-align:center; font-size:0.9rem">Elige un castillo para iniciar el asalto.</p>
+        <div id="muro"></div>
+        <div class="panel-inferior">
+            <div id="info-dados" style="font-size: 1rem; color: #f1c40f;">Tropas: 7</div>
+            <div class="bandeja-dados" id="bandeja"></div>
+            <div>
+                <button id="btn-lanzar" onclick="lanzar()" disabled>LANZAR ATAQUE</button>
+                <button id="btn-fallo" onclick="penalizar()" style="display:none; background:#c0392b;">FALLO (-1 DADO)</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN OFICIAL SEGÚN TU PEDIDO Y LAS FUENTES [1, 5, 6]
-        const castillos = [
-            // Clan Oda (3) - Color Naranja
+        const castillosData = [
             { id: 0, clan: "Oda", nombre: "Kiyosu", color: "#d35400", lineas: ["🐎", "⚔️3"], pts: 2, unif: 18 },
             { id: 1, clan: "Oda", nombre: "Inabayama", color: "#d35400", lineas: ["🏹", "⚔️1"], pts: 1, unif: 18 },
             { id: 2, clan: "Oda", nombre: "Azuchi", color: "#d35400", lineas: ["🐎🐎", "⚔️5"], pts: 3, unif: 18 },
-            // Clan Tokugawa (3) - Color Negro/Gris
-            { id: 3, clan: "Tokugawa", nombre: "Okazaki", color: "#333", lineas: ["⚔️7", "🏹"], pts: 2, unif: 18 },
-            { id: 4, clan: "Tokugawa", nombre: "Hamamatsu", color: "#333", lineas: ["🏹🏹"], pts: 1, unif: 18 },
-            { id: 5, clan: "Tokugawa", nombre: "Edo", color: "#333", lineas: ["⚔️3", "🏹", "🐎"], pts: 3, unif: 18 },
-            // Clan Shimazu (2) - Color Verde
+            { id: 3, clan: "Tokugawa", nombre: "Okazaki", color: "#444", lineas: ["⚔️7", "🏹"], pts: 2, unif: 18 },
+            { id: 4, clan: "Tokugawa", nombre: "Hamamatsu", color: "#444", lineas: ["🏹🏹"], pts: 1, unif: 18 },
+            { id: 5, clan: "Tokugawa", nombre: "Edo", color: "#444", lineas: ["⚔️3", "🏹", "🐎"], pts: 3, unif: 18 },
             { id: 6, clan: "Shimazu", nombre: "Uchijo", color: "#27ae60", lineas: ["🏹", "⚔️5", "⚔️2"], pts: 2, unif: 7 },
             { id: 7, clan: "Shimazu", nombre: "Kagoshima", color: "#27ae60", lineas: ["⚔️4"], pts: 3, unif: 7 },
-            // Clan Chosokabe (2) - Color Azul
             { id: 8, clan: "Chosokabe", nombre: "Oko", color: "#3498db", lineas: ["🐎"], pts: 1, unif: 5 },
-            { id: 9, clan: "Chosokabe", nombre: "Urado", color: "#⚔️4", color: "#3498db", lineas: ["⚔️4", "⚔️4"], pts: 2, unif: 5 },
-            // Clan Mori (2) - Color Rojo
+            { id: 9, clan: "Chosokabe", nombre: "Urado", color: "#3498db", lineas: ["⚔️4", "⚔️4"], pts: 2, unif: 5 },
             { id: 10, clan: "Mori", nombre: "Yoshida-Koriyama", color: "#e74c3c", lineas: ["🏹", "⚔️5", "⚔️2"], pts: 2, unif: 10 },
             { id: 11, clan: "Mori", nombre: "Gassan-Toda", color: "#e74c3c", lineas: ["⚔️8"], pts: 2, unif: 10 },
-            // Clan Uesugi (2) - Color Púrpura
             { id: 12, clan: "Uesugi", nombre: "Kasugayama", color: "#8e44ad", lineas: ["🏹🏹", "🐎🐎"], pts: 4, unif: 12 },
             { id: 13, clan: "Uesugi", nombre: "Otate", color: "#8e44ad", lineas: ["🏹🏹", "🐎", "⚔️6"], pts: 3, unif: 12 }
         ];
 
-        let dadosMano = 7, dadosEnCarta = 0, idSel = null, conquistados = [], clanesLlenos = [], tirada = [];
+        const playerColors = ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6", "#e67e22"];
+        let state = {
+            numPlayers: 0,
+            turno: 0,
+            players: [], // {id, score, cards:[]}
+            conquistados: {}, // castleId: playerId
+            unificados: [], // clan names
+            dadosMano: 7,
+            dadosEnCarta: 0,
+            idSel: null,
+            tirada: [],
+            lineasHechas: []
+        };
+
+        function initGame(n) {
+            state.numPlayers = n;
+            for(let i=0; i<n; i++) state.players.push({ id: i, name: `Jugador ${i+1}`, score: 0, cards: [] });
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            render();
+        }
 
         function render() {
+            const list = document.getElementById('players-list'); list.innerHTML = '';
+            state.players.forEach((p, i) => {
+                list.innerHTML += `<div class="player-tag ${state.turno === i ? 'active' : ''}" style="background:${playerColors[i]}">${p.name}: ${p.score} pts</div>`;
+            });
+            document.getElementById('turn-info').innerText = `Turno de: ${state.players[state.turno].name}`;
+
             const container = document.getElementById('muro'); container.innerHTML = '';
-            castillos.forEach(c => {
-                const esUnif = clanesLlenos.includes(c.clan);
+            castillosData.forEach(c => {
+                const ownerId = state.conquistados[c.id];
+                const esUnif = state.unificados.includes(c.clan);
                 const div = document.createElement('div');
-                div.className = `carta ${esUnif ? 'inexpugnable' : ''} ${idSel === c.id ? 'seleccionada' : ''}`;
-                div.style.borderColor = c.color;
-                div.innerHTML = `<div class="clan-label" style="color:${c.color}">${c.clan}</div>
-                                 <strong style="font-size:0.9rem">${c.nombre}</strong><div id="lines-${c.id}"></div>
-                                 <div style="position:absolute; bottom:8px; left:8px; font-weight:bold;">PTS: ${c.pts}</div>`;
+                div.className = `carta ${esUnif ? 'inexpugnable' : ''} ${state.idSel === c.id ? 'seleccionada' : ''}`;
+                
+                // Si alguien lo tiene, borde del color del jugador
+                if(ownerId !== undefined) div.style.border = `6px solid ${playerColors[ownerId]}`;
+                else div.style.borderColor = "#888";
+
+                div.innerHTML = `<div style="font-size:0.6rem; color:${c.color}">${c.clan.toUpperCase()}</div>
+                                 <strong>${c.nombre}</strong><div id="lines-${c.id}"></div>
+                                 <div style="position:absolute; bottom:5px; left:5px; font-weight:bold;">PTS: ${c.pts}</div>`;
+                
+                // Mostrar líneas de batalla
+                const linesDiv = div.querySelector(`#lines-${c.id}`);
+                // Si no es del centro, añadir Daimyo Rojo
+                if(ownerId !== undefined && ownerId !== state.turno && !esUnif) {
+                    const lRed = document.createElement('div'); lRed.className = 'linea daimyo-rojo';
+                    lRed.innerText = "👺 (ROBO)";
+                    if(state.idSel === c.id && state.lineasHechas.includes("daimyo-robo")) lRed.classList.add('hecha');
+                    linesDiv.appendChild(lRed);
+                }
+
                 c.lineas.forEach((l, i) => {
                     const lDiv = document.createElement('div'); lDiv.className = 'linea';
                     lDiv.id = `l-${c.id}-${i}`; lDiv.innerText = l;
-                    div.querySelector(`#lines-${c.id}`).appendChild(lDiv);
+                    if(state.idSel === c.id && state.lineasHechas.includes(i)) lDiv.classList.add('hecha');
+                    linesDiv.appendChild(lDiv);
                 });
-                if (!esUnif && !conquistados.includes(c.id)) div.onclick = () => select(c.id);
+
+                if (!esUnif && ownerId !== state.turno) div.onclick = () => select(c.id);
                 container.appendChild(div);
             });
-            updateStats();
+            document.getElementById('info-dados').innerText = `Tropas: ${state.dadosMano - state.dadosEnCarta}`;
         }
 
-        function select(id) { if (dadosEnCarta > 0) return; idSel = id; document.getElementById('btn-lanzar').disabled = false; render(); }
+        function select(id) { if (state.dadosEnCarta > 0) return; state.idSel = id; state.lineasHechas = []; document.getElementById('btn-lanzar').disabled = false; render(); }
 
         function lanzar() {
-            const num = dadosMano - dadosEnCarta; tirada = [];
+            const num = state.dadosMano - state.dadosEnCarta; state.tirada = [];
             const tray = document.getElementById('bandeja'); tray.innerHTML = '';
             const caras = ["⚔️1", "⚔️2", "⚔️3", "🏹", "🐎", "👺"];
             for(let i=0; i<num; i++) {
                 const r = caras[Math.floor(Math.random()*6)];
-                tirada.push({ val: r.includes('⚔️') ? parseInt(r.replace('⚔️','')) : 1, tipo: r.includes('⚔️') ? 'inf' : r, txt: r });
+                state.tirada.push({ val: r.includes('⚔️') ? parseInt(r.replace('⚔️','')) : 1, tipo: r.includes('⚔️') ? 'inf' : r, txt: r });
                 tray.innerHTML += `<div class="dado">${r}</div>`;
             }
             validar();
         }
 
         function validar() {
-            const c = castillos[idSel]; let hayAlgo = false;
+            const c = castillosData[state.idSel]; let hayAlgo = false;
             document.getElementById('btn-lanzar').disabled = true;
             document.getElementById('btn-fallo').style.display = 'inline-block';
 
+            // Validar líneas normales
             c.lineas.forEach((l, i) => {
-                const el = document.getElementById(`l-${idSel}-${i}`);
-                if (el.classList.contains('hecha')) return;
-                let ok = false;
-                if (l.includes('⚔️')) {
-                    const req = parseInt(l.replace('⚔️',''));
-                    const sum = tirada.filter(d => d.tipo === 'inf').reduce((a,b) => a + b.val, 0);
-                    if (sum >= req) ok = true;
-                } else {
-                    const reqSyms = [...l]; const disp = tirada.map(d => d.txt);
-                    ok = reqSyms.every(s => { const idx = disp.indexOf(s); if (idx > -1) { disp.splice(idx, 1); return true; } return false; });
-                }
-                if (ok) { el.classList.add('resaltada'); el.onclick = () => ocupar(i, l); hayAlgo = true; }
+                if (state.lineasHechas.includes(i)) return;
+                if (checkReq(l)) { habilitarLinea(i, l); hayAlgo = true; }
             });
 
+            // Validar Daimyo de Robo
+            if(state.conquistados[c.id] !== undefined && !state.lineasHechas.includes("daimyo-robo")) {
+                if(state.tirada.some(d => d.txt === "👺")) {
+                    const el = document.querySelector('.daimyo-rojo');
+                    el.classList.add('resaltada');
+                    el.onclick = () => ocupar("daimyo-robo", "👺");
+                    hayAlgo = true;
+                }
+            }
+
             if (!hayAlgo) {
-                document.getElementById('feedback').innerText = "Fallo. Perderás 1 dado.";
-                checkImposibilidad(true); // Detecta derrota tras fallo
+                document.getElementById('feedback').innerText = "Fallo. -1 dado.";
+                checkDerrota();
+            } else { document.getElementById('feedback').innerText = "¡Elige qué línea ocupar!"; }
+        }
+
+        function checkReq(l) {
+            if (l.includes('⚔️')) {
+                const req = parseInt(l.replace('⚔️',''));
+                const sum = state.tirada.filter(d => d.tipo === 'inf').reduce((a,b) => a + b.val, 0);
+                return sum >= req;
             } else {
-                document.getElementById('feedback').innerText = "¡Tropas listas! Elige una línea.";
+                const reqSyms = [...l]; const disp = state.tirada.map(d => d.txt);
+                return reqSyms.every(s => { const idx = disp.indexOf(s); if (idx > -1) { disp.splice(idx, 1); return true; } return false; });
             }
         }
 
-        function checkImposibilidad(trasFallo) {
-            const dadosRestantes = (dadosMano - (trasFallo ? 1 : 0)) - dadosEnCarta;
-            const lineasPendientes = Array.from(document.querySelectorAll(`#lines-${idSel} .linea:not(.hecha)`));
-            let minDadosReq = 0;
-            lineasPendientes.forEach(el => {
-                const t = el.innerText;
-                if (t.includes('⚔️')) minDadosReq += Math.ceil(parseInt(t.replace('⚔️','')) / 3);
-                else minDadosReq += [...t].length;
-            });
-
-            if (dadosRestantes < minDadosReq) {
-                alert(`DERROTA INEVITABLE: Necesitas ${minDadosReq} dados pero solo te quedarían ${dadosRestantes}. Turno perdido.`);
-                reset();
-            }
+        function habilitarLinea(idx, txt) {
+            const el = document.getElementById(`l-${state.idSel}-${idx}`);
+            el.classList.add('resaltada');
+            el.onclick = () => ocupar(idx, txt);
         }
 
         function ocupar(idx, txt) {
             let usados = 0;
             if (txt.includes('⚔️')) {
                 const req = parseInt(txt.replace('⚔️',''));
-                const kats = tirada.filter(d => d.tipo === 'inf').sort((a,b) => b.val - a.val);
-                let suma = 0; for(let k of kats) { suma += k.val; usados++; if (suma >= req) break; }
+                const kats = state.tirada.filter(d => d.tipo === 'inf').sort((a,b) => b.val - a.val);
+                let s = 0; for(let k of kats) { s += k.val; usados++; if (s >= req) break; }
             } else usados = [...txt].length;
 
-            dadosEnCarta += usados;
-            const el = document.getElementById(`l-${idSel}-${idx}`);
-            el.classList.replace('resaltada', 'hecha'); el.onclick = null;
-            document.querySelectorAll('.linea.resaltada').forEach(e => { e.classList.remove('resaltada'); e.onclick = null; });
-
-            if (document.querySelectorAll(`#lines-${idSel} .linea:not(.hecha)`).length === 0) {
-                alert("¡CASTILLO CONQUISTADO!"); conquistados.push(idSel); checkClanes(); reset();
-            } else {
+            state.dadosEnCarta += usados;
+            state.lineasHechas.push(idx);
+            
+            const reqTotales = castillosData[state.idSel].lineas.length + (state.conquistados[state.idSel] !== undefined ? 1 : 0);
+            if (state.lineasHechas.length === reqTotales) conquistar();
+            else {
                 document.getElementById('btn-lanzar').disabled = false;
                 document.getElementById('btn-fallo').style.display = 'none';
-                checkImposibilidad(false); // Detecta derrota tras ocupar
+                render();
             }
-            updateStats();
+        }
+
+        function conquistar() {
+            alert(`¡DAIMYO! ${state.players[state.turno].name} conquista ${castillosData[state.idSel].nombre}`);
+            state.conquistados[state.idSel] = state.turno;
+            verificarUnificacion();
+            nextTurn();
+        }
+
+        function nextTurn() {
+            state.turno = (state.turno + 1) % state.numPlayers;
+            state.dadosMano = 7; state.dadosEnCarta = 0; state.idSel = null; state.lineasHechas = [];
+            document.getElementById('btn-lanzar').disabled = true;
+            document.getElementById('btn-fallo').style.display = 'none';
+            document.getElementById('bandeja').innerHTML = '';
+            render();
         }
 
         function penalizar() {
-            dadosMano--; if (dadosMano <= dadosEnCarta) { alert("Sin tropas. Fin del asalto."); reset(); }
+            state.dadosMano--;
+            if (state.dadosMano <= state.dadosEnCarta) { alert("Asalto fallido. Pierdes el turno."); nextTurn(); }
             else lanzar();
-            updateStats();
         }
 
-        function checkClanes() {
+        function verificarUnificacion() {
             ["Oda", "Tokugawa", "Shimazu", "Chosokabe", "Mori", "Uesugi"].forEach(clan => {
-                const ids = castillos.filter(c => c.clan === clan).map(c => c.id);
-                if (ids.every(id => conquistados.includes(id)) && !clanesLlenos.includes(clan)) {
-                    clanesLlenos.push(clan); alert(`¡CLAN ${clan.toUpperCase()} UNIFICADO!`);
+                const ids = castillosData.filter(c => c.clan === clan).map(c => c.id);
+                if (ids.every(id => state.conquistados[id] === state.turno) && !state.unificados.includes(clan)) {
+                    state.unificados.push(clan);
+                    alert(`¡${clan.toUpperCase()} UNIFICADO!`);
                 }
+            });
+            updateScores();
+        }
+
+        function updateScores() {
+            state.players.forEach(p => {
+                let total = 0; const clansVistos = [];
+                castillosData.forEach(c => {
+                    if (state.conquistados[c.id] === p.id) {
+                        if (state.unificados.includes(c.clan)) {
+                            if (!clansVistos.includes(c.clan)) { total += c.unif; clansVistos.push(c.clan); }
+                        } else total += c.pts;
+                    }
+                });
+                p.score = total;
             });
         }
 
-        function reset() {
-            dadosMano = 7; dadosEnCarta = 0; idSel = null; tirada = [];
-            document.getElementById('btn-lanzar').disabled = true;
-            document.getElementById('btn-fallo').style.display = 'none';
-            document.getElementById('bandeja').innerHTML = ''; render();
+        function saveGame() {
+            localStorage.setItem('ageOfWarSave', JSON.stringify(state));
+            alert("Partida guardada en este navegador.");
         }
 
-        function updateStats() {
-            document.getElementById('info-dados').innerText = `Tropas: ${dadosMano - dadosEnCarta}`;
-            let total = 0; const clansVistos = [];
-            castillos.forEach(c => {
-                if (conquistados.includes(c.id)) {
-                    if (clanesLlenos.includes(c.clan)) {
-                        if (!clansVistos.includes(c.clan)) { total += c.unif; clansVistos.push(c.clan); }
-                    } else total += c.pts;
-                }
-            });
-            document.getElementById('puntos-val').innerText = total;
-            document.getElementById('clanes-lista').innerText = clanesLlenos.join(", ");
+        function loadGame() {
+            const saved = localStorage.getItem('ageOfWarSave');
+            if (saved) {
+                state = JSON.parse(saved);
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('game-screen').style.display = 'block';
+                render();
+            } else alert("No hay partidas guardadas.");
         }
-
-        render();
+        
+        function checkDerrota() {
+             const dadosRestantes = (state.dadosMano - 1) - state.dadosEnCarta;
+             if(dadosRestantes < 1) { alert("Sin dados suficientes. Turno perdido."); nextTurn(); }
+        }
     </script>
 </body>
 </html>
+``` [1-6]
