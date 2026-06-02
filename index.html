@@ -2,103 +2,119 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Age of War - Versión Multijugador 1.5</title>
+    <title>Age of War - Versión 1.7 (FX y Animaciones)</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; }
-        #setup-screen { background: #2c3e50; padding: 30px; border-radius: 15px; border: 4px solid #f1c40f; text-align: center; margin-top: 50px; }
-        #game-screen { display: none; width: 98%; }
-        #muro { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding-bottom: 220px; margin-top: 20px; }
-        .carta { background: #fdfdfd; color: #111; padding: 8px; border-radius: 8px; border: 4px solid #888; cursor: pointer; transition: 0.2s; position: relative; min-height: 200px; }
-        .carta.seleccionada { border-color: #f1c40f; box-shadow: 0 0 20px #f1c40f; transform: scale(1.02); z-index: 10; }
-        .carta.inexpugnable { background: #333; color: #999; border-color: #27ae60; cursor: default; }
-        .linea { border: 1px solid #ccc; margin: 3px 0; padding: 2px; border-radius: 4px; background: white; font-weight: bold; font-size: 0.8rem; text-align: center; }
-        .linea.hecha { background: #27ae60; color: white; text-decoration: line-through; }
-        .linea.resaltada { border: 2px solid #2ecc71; background: #d5f5e3; cursor: pointer; }
-        .linea.daimyo-rojo { border: 2px solid #c0392b; color: #c0392b; background: #f9ebea; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; overflow-x: hidden; }
         
+        /* PANTALLA DE INICIO */
+        #setup-screen { background: #2c3e50; padding: 40px; border-radius: 15px; border: 4px solid #f1c40f; text-align: center; margin-top: 50px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        #game-screen { display: none; width: 98%; perspective: 1000px; }
+
+        /* CONTENEDOR DE CARTAS CON ANIMACIÓN DE GIRO */
+        #muro { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding-bottom: 220px; margin-top: 20px; }
+        
+        .carta-container { width: 100%; height: 210px; perspective: 1000px; cursor: pointer; }
+        .carta-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        
+        /* Cuando el clan está unificado, la carta gira */
+        .unificada .carta-inner { transform: rotateY(180deg); }
+
+        .carta-front, .carta-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; border: 4px solid #888; box-sizing: border-box; padding: 8px; }
+        
+        .carta-front { background: #fdfdfd; color: #111; }
+        .carta-back { background: #2c3e50; color: #ecf0f1; transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: center; align-items: center; border-color: #27ae60; }
+        
+        .seleccionada .carta-front { border-color: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
+        
+        .linea { border: 1px solid #ccc; margin: 3px 0; padding: 2px; border-radius: 4px; background: white; font-weight: bold; font-size: 0.8rem; }
+        .linea.hecha { background: #27ae60; color: white; text-decoration: line-through; }
+        .linea.resaltada { border: 2px solid #2ecc71; background: #d5f5e3; animation: pulse 1s infinite; }
+        .linea.daimyo-rojo { border: 2px solid #c0392b; color: #c0392b; background: #f9ebea; }
+
+        /* PANEL INFERIOR Y DADOS */
         .panel-inferior { position: fixed; bottom: 0; width: 100%; background: #222; border-top: 5px solid #f1c40f; padding: 15px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
         .bandeja-dados { display: flex; gap: 8px; min-width: 350px; justify-content: center; background: #333; padding: 10px; border-radius: 10px; }
-        .dado { width: 45px; height: 45px; background: white; color: black; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.3rem; font-weight: bold; border: 2px solid #000; }
-        
-        .players-bar { position: fixed; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; }
-        .player-tag { padding: 5px 15px; border-radius: 5px; font-weight: bold; border: 2px solid transparent; opacity: 0.6; }
-        .player-tag.active { opacity: 1; border-color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-        
-        button { padding: 10px 20px; font-size: 1rem; cursor: pointer; border-radius: 5px; border: none; background: #e67e22; color: white; font-weight: bold; margin: 5px; }
-        button:disabled { background: #444; color: #777; cursor: not-allowed; }
+        .dado { width: 50px; height: 50px; background: white; color: black; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.4rem; font-weight: bold; border: 2px solid #000; transition: transform 0.1s; }
+        .rolling { animation: shake 0.1s infinite; }
+
+        .players-bar { position: fixed; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; z-index: 1000; }
+        .player-tag { padding: 8px 15px; border-radius: 5px; font-weight: bold; opacity: 0.6; }
+        .player-tag.active { opacity: 1; border: 2px solid white; box-shadow: 0 0 15px rgba(255,255,255,0.4); transform: scale(1.05); }
+
+        button { padding: 12px 25px; font-size: 1rem; cursor: pointer; border-radius: 6px; border: none; background: #e67e22; color: white; font-weight: bold; }
+        button:disabled { background: #444; cursor: not-allowed; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        @keyframes shake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, -2px); } }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla de Inicio -->
     <div id="setup-screen">
         <h1 style="color:#f1c40f">AGE OF WAR</h1>
-        <p>Selecciona el número de Daimyos (2-6):</p>
-        <div id="player-options">
-            <button onclick="initGame(2)">2 Jugadores</button>
-            <button onclick="initGame(3)">3 Jugadores</button>
-            <button onclick="initGame(4)">4 Jugadores</button>
-            <button onclick="initGame(5)">5 Jugadores</button>
-            <button onclick="initGame(6)">6 Jugadores</button>
-        </div>
-        <hr>
-        <button onclick="loadGame()" style="background:#27ae60">Continuar Partida Guardada</button>
+        <p>Selecciona el número de Daimyos:</p>
+        <button onclick="initGame(2)">2 Jugadores</button>
+        <button onclick="initGame(3)">3 Jugadores</button>
+        <button onclick="initGame(4)">4 Jugadores</button>
+        <hr style="margin:20px 0; border: 1px solid #444;">
+        <button onclick="loadGame()" style="background:#27ae60">Cargar Partida</button>
     </div>
 
-    <!-- Pantalla de Juego -->
     <div id="game-screen">
         <div class="players-bar" id="players-list"></div>
-        <div style="text-align: right; width: 100%;">
-            <button onclick="saveGame()" style="background:#2980b9; font-size:0.8rem">Guardar Partida</button>
-        </div>
-        <h2 id="turn-info" style="text-align:center; color:#f1c40f; margin:5px;">Turno de: Jugador 1</h2>
-        <p id="feedback" style="text-align:center; font-size:0.9rem">Elige un castillo para iniciar el asalto.</p>
+        <div style="text-align: right;"><button onclick="saveGame()" style="background:#2980b9; font-size:0.8rem">Guardar</button></div>
+        <h2 id="turn-info" style="text-align:center; color:#f1c40f; margin:0;"></h2>
         <div id="muro"></div>
         <div class="panel-inferior">
-            <div id="info-dados" style="font-size: 1rem; color: #f1c40f;">Tropas: 7</div>
+            <div id="info-dados" style="font-size: 1.1rem; color: #f1c40f;"></div>
             <div class="bandeja-dados" id="bandeja"></div>
             <div>
-                <button id="btn-lanzar" onclick="lanzar()" disabled>LANZAR ATAQUE</button>
-                <button id="btn-fallo" onclick="penalizar()" style="display:none; background:#c0392b;">FALLO (-1 DADO)</button>
+                <button id="btn-lanzar" onclick="lanzarConSonido()" disabled>LANZAR</button>
+                <button id="btn-fallo" onclick="penalizar()" style="display:none; background:#c0392b;">FALLO</button>
             </div>
         </div>
     </div>
 
     <script>
+        // CONFIGURACIÓN DE SONIDO (Web Audio API)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playDiceSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
         const castillosData = [
             { id: 0, clan: "Oda", nombre: "Kiyosu", color: "#d35400", lineas: ["🐎", "⚔️3"], pts: 2, unif: 18 },
             { id: 1, clan: "Oda", nombre: "Inabayama", color: "#d35400", lineas: ["🏹", "⚔️1"], pts: 1, unif: 18 },
             { id: 2, clan: "Oda", nombre: "Azuchi", color: "#d35400", lineas: ["🐎🐎", "⚔️5"], pts: 3, unif: 18 },
             { id: 3, clan: "Tokugawa", nombre: "Okazaki", color: "#444", lineas: ["⚔️7", "🏹"], pts: 2, unif: 18 },
-            { id: 4, clan: "Tokugawa", nombre: "Hamamatsu", color: "#444", lineas: ["🏹🏹"], pts: 1, unif: 18 },
+            { id: 4, clan: "Tokugawa", nombre: "Inuyama", color: "#444", lineas: ["🏹🏹"], pts: 1, unif: 18 },
             { id: 5, clan: "Tokugawa", nombre: "Edo", color: "#444", lineas: ["⚔️3", "🏹", "🐎"], pts: 3, unif: 18 },
             { id: 6, clan: "Shimazu", nombre: "Uchijo", color: "#27ae60", lineas: ["🏹", "⚔️5", "⚔️2"], pts: 2, unif: 7 },
             { id: 7, clan: "Shimazu", nombre: "Kagoshima", color: "#27ae60", lineas: ["⚔️4"], pts: 3, unif: 7 },
             { id: 8, clan: "Chosokabe", nombre: "Oko", color: "#3498db", lineas: ["🐎"], pts: 1, unif: 5 },
             { id: 9, clan: "Chosokabe", nombre: "Urado", color: "#3498db", lineas: ["⚔️4", "⚔️4"], pts: 2, unif: 5 },
-            { id: 10, clan: "Mori", nombre: "Yoshida-Koriyama", color: "#e74c3c", lineas: ["🏹", "⚔️5", "⚔️2"], pts: 2, unif: 10 },
-            { id: 11, clan: "Mori", nombre: "Gassan-Toda", color: "#e74c3c", lineas: ["⚔️8"], pts: 2, unif: 10 },
+            { id: 10, clan: "Mori", nombre: "Takahashi", color: "#e74c3c", lineas: ["🏹", "⚔️5"], pts: 2, unif: 10 },
+            { id: 11, clan: "Mori", nombre: "Gassan-Toda", color: "#e74c3c", lineas: ["👺", "⚔️8"], pts: 2, unif: 10 },
             { id: 12, clan: "Uesugi", nombre: "Kasugayama", color: "#8e44ad", lineas: ["🏹🏹", "🐎🐎"], pts: 4, unif: 12 },
             { id: 13, clan: "Uesugi", nombre: "Otate", color: "#8e44ad", lineas: ["🏹🏹", "🐎", "⚔️6"], pts: 3, unif: 12 }
         ];
 
         const playerColors = ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6", "#e67e22"];
-        let state = {
-            numPlayers: 0,
-            turno: 0,
-            players: [], // {id, score, cards:[]}
-            conquistados: {}, // castleId: playerId
-            unificados: [], // clan names
-            dadosMano: 7,
-            dadosEnCarta: 0,
-            idSel: null,
-            tirada: [],
-            lineasHechas: []
-        };
+        let state = { numPlayers: 0, turno: 0, players: [], conquistados: {}, unificados: [], dadosMano: 7, dadosEnCarta: 0, idSel: null, tirada: [], lineasHechas: [] };
 
         function initGame(n) {
             state.numPlayers = n;
-            for(let i=0; i<n; i++) state.players.push({ id: i, name: `Jugador ${i+1}`, score: 0, cards: [] });
+            for(let i=0; i<n; i++) state.players.push({ id: i, name: `Daimyo ${i+1}`, score: 0 });
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
             render();
@@ -107,7 +123,7 @@
         function render() {
             const list = document.getElementById('players-list'); list.innerHTML = '';
             state.players.forEach((p, i) => {
-                list.innerHTML += `<div class="player-tag ${state.turno === i ? 'active' : ''}" style="background:${playerColors[i]}">${p.name}: ${p.score} pts</div>`;
+                list.innerHTML += `<div class="player-tag ${state.turno === i ? 'active' : ''}" style="background:${playerColors[i]}">${p.name}: ${p.score} Pts</div>`;
             });
             document.getElementById('turn-info').innerText = `Turno de: ${state.players[state.turno].name}`;
 
@@ -115,23 +131,30 @@
             castillosData.forEach(c => {
                 const ownerId = state.conquistados[c.id];
                 const esUnif = state.unificados.includes(c.clan);
-                const div = document.createElement('div');
-                div.className = `carta ${esUnif ? 'inexpugnable' : ''} ${state.idSel === c.id ? 'seleccionada' : ''}`;
+                const wrapper = document.createElement('div');
+                wrapper.className = `carta-container ${esUnif ? 'unificada' : ''} ${state.idSel === c.id ? 'seleccionada' : ''}`;
                 
-                // Si alguien lo tiene, borde del color del jugador
-                if(ownerId !== undefined) div.style.border = `6px solid ${playerColors[ownerId]}`;
-                else div.style.borderColor = "#888";
+                let borderStyle = ownerId !== undefined ? `6px solid ${playerColors[ownerId]}` : "4px solid #888";
 
-                div.innerHTML = `<div style="font-size:0.6rem; color:${c.color}">${c.clan.toUpperCase()}</div>
-                                 <strong>${c.nombre}</strong><div id="lines-${c.id}"></div>
-                                 <div style="position:absolute; bottom:5px; left:5px; font-weight:bold;">PTS: ${c.pts}</div>`;
+                wrapper.innerHTML = `
+                    <div class="carta-inner">
+                        <div class="carta-front" style="border: ${borderStyle}">
+                            <div style="font-size:0.6rem; color:${c.color}; font-weight:bold">${c.clan.toUpperCase()}</div>
+                            <strong>${c.nombre}</strong>
+                            <div id="lines-${c.id}"></div>
+                            <div style="position:absolute; bottom:5px; right:8px; font-weight:bold;">P:${c.pts}</div>
+                        </div>
+                        <div class="carta-back">
+                            <h3 style="margin:0">${c.clan.toUpperCase()}</h3>
+                            <p style="font-size:0.8rem">UNIFICADO</p>
+                            <div style="font-size:1.5rem">🏯</div>
+                        </div>
+                    </div>`;
                 
-                // Mostrar líneas de batalla
-                const linesDiv = div.querySelector(`#lines-${c.id}`);
-                // Si no es del centro, añadir Daimyo Rojo
+                const linesDiv = wrapper.querySelector(`#lines-${c.id}`);
                 if(ownerId !== undefined && ownerId !== state.turno && !esUnif) {
                     const lRed = document.createElement('div'); lRed.className = 'linea daimyo-rojo';
-                    lRed.innerText = "👺 (ROBO)";
+                    lRed.innerText = "👺 (Defensa)";
                     if(state.idSel === c.id && state.lineasHechas.includes("daimyo-robo")) lRed.classList.add('hecha');
                     linesDiv.appendChild(lRed);
                 }
@@ -143,15 +166,39 @@
                     linesDiv.appendChild(lDiv);
                 });
 
-                if (!esUnif && ownerId !== state.turno) div.onclick = () => select(c.id);
-                container.appendChild(div);
+                if (!esUnif && ownerId !== state.turno) wrapper.onclick = () => select(c.id);
+                container.appendChild(wrapper);
             });
-            document.getElementById('info-dados').innerText = `Tropas: ${state.dadosMano - state.dadosEnCarta}`;
+            document.getElementById('info-dados').innerText = `Dados: ${state.dadosMano - state.dadosEnCarta}`;
         }
 
         function select(id) { if (state.dadosEnCarta > 0) return; state.idSel = id; state.lineasHechas = []; document.getElementById('btn-lanzar').disabled = false; render(); }
 
-        function lanzar() {
+        function lanzarConSonido() {
+            // Efecto visual de lanzamiento
+            const tray = document.getElementById('bandeja');
+            tray.innerHTML = '';
+            const num = state.dadosMano - state.dadosEnCarta;
+            
+            let count = 0;
+            const interval = setInterval(() => {
+                tray.innerHTML = '';
+                for(let i=0; i<num; i++) {
+                    const d = document.createElement('div');
+                    d.className = 'dado rolling';
+                    d.innerText = ["⚔️1", "⚔️2", "⚔️3", "🏹", "🐎", "👺"][Math.floor(Math.random()*6)];
+                    tray.appendChild(d);
+                }
+                playDiceSound();
+                count++;
+                if(count > 5) {
+                    clearInterval(interval);
+                    ejecutarLanzamientoReal();
+                }
+            }, 80);
+        }
+
+        function ejecutarLanzamientoReal() {
             const num = state.dadosMano - state.dadosEnCarta; state.tirada = [];
             const tray = document.getElementById('bandeja'); tray.innerHTML = '';
             const caras = ["⚔️1", "⚔️2", "⚔️3", "🏹", "🐎", "👺"];
@@ -168,26 +215,18 @@
             document.getElementById('btn-lanzar').disabled = true;
             document.getElementById('btn-fallo').style.display = 'inline-block';
 
-            // Validar líneas normales
             c.lineas.forEach((l, i) => {
                 if (state.lineasHechas.includes(i)) return;
                 if (checkReq(l)) { habilitarLinea(i, l); hayAlgo = true; }
             });
 
-            // Validar Daimyo de Robo
-            if(state.conquistados[c.id] !== undefined && !state.lineasHechas.includes("daimyo-robo")) {
+            if(state.conquistados[state.idSel] !== undefined && !state.lineasHechas.includes("daimyo-robo")) {
                 if(state.tirada.some(d => d.txt === "👺")) {
                     const el = document.querySelector('.daimyo-rojo');
-                    el.classList.add('resaltada');
-                    el.onclick = () => ocupar("daimyo-robo", "👺");
-                    hayAlgo = true;
+                    if(el) { el.classList.add('resaltada'); el.onclick = () => ocupar("daimyo-robo", "👺"); hayAlgo = true; }
                 }
             }
-
-            if (!hayAlgo) {
-                document.getElementById('feedback').innerText = "Fallo. -1 dado.";
-                checkDerrota();
-            } else { document.getElementById('feedback').innerText = "¡Elige qué línea ocupar!"; }
+            if (!hayAlgo) checkDerrota(true);
         }
 
         function checkReq(l) {
@@ -203,8 +242,7 @@
 
         function habilitarLinea(idx, txt) {
             const el = document.getElementById(`l-${state.idSel}-${idx}`);
-            el.classList.add('resaltada');
-            el.onclick = () => ocupar(idx, txt);
+            if(el) { el.classList.add('resaltada'); el.onclick = () => ocupar(idx, txt); }
         }
 
         function ocupar(idx, txt) {
@@ -223,15 +261,15 @@
             else {
                 document.getElementById('btn-lanzar').disabled = false;
                 document.getElementById('btn-fallo').style.display = 'none';
+                checkDerrota(false);
                 render();
             }
         }
 
         function conquistar() {
-            alert(`¡DAIMYO! ${state.players[state.turno].name} conquista ${castillosData[state.idSel].nombre}`);
+            alert(`¡VICTORIA! ${state.players[state.turno].name} ha capturado el castillo.`);
             state.conquistados[state.idSel] = state.turno;
-            verificarUnificacion();
-            nextTurn();
+            verificarUnificacion(); nextTurn();
         }
 
         function nextTurn() {
@@ -245,8 +283,8 @@
 
         function penalizar() {
             state.dadosMano--;
-            if (state.dadosMano <= state.dadosEnCarta) { alert("Asalto fallido. Pierdes el turno."); nextTurn(); }
-            else lanzar();
+            if (state.dadosMano <= state.dadosEnCarta) { alert("Asalto fallido."); nextTurn(); }
+            else ejecutarLanzamientoReal();
         }
 
         function verificarUnificacion() {
@@ -254,19 +292,20 @@
                 const ids = castillosData.filter(c => c.clan === clan).map(c => c.id);
                 if (ids.every(id => state.conquistados[id] === state.turno) && !state.unificados.includes(clan)) {
                     state.unificados.push(clan);
-                    alert(`¡${clan.toUpperCase()} UNIFICADO!`);
+                    alert(`¡CLAN ${clan.toUpperCase()} UNIFICADO!`);
                 }
             });
             updateScores();
         }
 
         function updateScores() {
+            const clanBonus = { "Oda": 18, "Tokugawa": 18, "Shimazu": 7, "Chosokabe": 5, "Mori": 10, "Uesugi": 12 };
             state.players.forEach(p => {
-                let total = 0; const clansVistos = [];
+                let total = 0; const clansContados = [];
                 castillosData.forEach(c => {
                     if (state.conquistados[c.id] === p.id) {
                         if (state.unificados.includes(c.clan)) {
-                            if (!clansVistos.includes(c.clan)) { total += c.unif; clansVistos.push(c.clan); }
+                            if (!clansContados.includes(c.clan)) { total += clanBonus[c.clan]; clansContados.push(c.clan); }
                         } else total += c.pts;
                     }
                 });
@@ -274,26 +313,23 @@
             });
         }
 
-        function saveGame() {
-            localStorage.setItem('ageOfWarSave', JSON.stringify(state));
-            alert("Partida guardada en este navegador.");
-        }
-
+        function saveGame() { localStorage.setItem('ageOfWarSave', JSON.stringify(state)); alert("Guardado."); }
         function loadGame() {
             const saved = localStorage.getItem('ageOfWarSave');
-            if (saved) {
-                state = JSON.parse(saved);
-                document.getElementById('setup-screen').style.display = 'none';
-                document.getElementById('game-screen').style.display = 'block';
-                render();
-            } else alert("No hay partidas guardadas.");
+            if (saved) { state = JSON.parse(saved); document.getElementById('setup-screen').style.display = 'none'; document.getElementById('game-screen').style.display = 'block'; render(); }
         }
-        
-        function checkDerrota() {
-             const dadosRestantes = (state.dadosMano - 1) - state.dadosEnCarta;
-             if(dadosRestantes < 1) { alert("Sin dados suficientes. Turno perdido."); nextTurn(); }
+
+        function checkDerrota(trasFallo) {
+             const dRest = (state.dadosMano - (trasFallo ? 1 : 0)) - state.dadosEnCarta;
+             const lineasP = Array.from(document.querySelectorAll(`#lines-${state.idSel} .linea:not(.hecha)`));
+             let minD = 0;
+             lineasP.forEach(el => {
+                 const t = el.innerText;
+                 if (t.includes('⚔️')) minD += Math.ceil(parseInt(t.replace('⚔️','')) / 3);
+                 else minD += [...t.replace('(Defensa)','')].length;
+             });
+             if (dRest < minD) { alert(`Imposible completar. Pierdes el turno.`); nextTurn(); }
         }
     </script>
 </body>
 </html>
-``` [1-6]
